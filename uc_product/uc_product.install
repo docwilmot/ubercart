@@ -80,16 +80,60 @@ function uc_product_schema() {
     'description' => 'Product information for nodes.',
     'fields' => array(
       'vid' => array(
-        'description' => 'The {node}.vid of the product.',
+        'description' => 'The {product}.vid of the product.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
       ),
       'nid' => array(
-        'description' => 'The {node}.nid of the product.',
-        'type' => 'int',
+        'description' => 'The {product}.nid of the product.',
+        'type' => 'serial',
         'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => 'The type of this product.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'langcode' => array(
+        'description' => 'The language code of this product.',
+        'type' => 'varchar',
+        'length' => 12,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'title' => array(
+        'description' => 'The title of this product, always treated as non-markup plain text.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'uid' => array(
+        'description' => 'The {users}.uid that owns this product; initially, this is the user that created it.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'status' => array(
+        'description' => 'Boolean indicating whether the product is published (visible to non-administrators).',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the product was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => 'The Unix timestamp when the product was most recently saved.',
+        'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
       ),
@@ -198,15 +242,6 @@ function uc_product_schema() {
       'nid' => array('nid'),
     ),
     'primary key' => array('vid'),
-    'foreign keys' => array(
-      'node' => array(
-        'table' => 'node',
-        'columns' => array(
-          'nid' => 'nid',
-          'vid' => 'vid',
-        ),
-      ),
-    ),
   );
 
   return $schema;
@@ -439,7 +474,7 @@ function uc_product_update_1004() {
  * Implements hook_install().
  */
 function uc_product_install() {
-  _uc_product_type_create();
+  // _uc_product_type_create();
 }
 
 /**

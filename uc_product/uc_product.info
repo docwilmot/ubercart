@@ -6,6 +6,8 @@ type = module
 hidden = 1
 
 dependencies[] = image
+dependencies[] = entity_plus
+dependencies[] = entity_ui
 
 ; Test cases
 ; Views handlers

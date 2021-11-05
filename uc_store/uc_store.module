@@ -542,8 +542,9 @@ function uc_store_validate_number(&$element, &$form_state) {
  * Form element validation handler for #type 'uc_quantity'.
  */
 function uc_store_validate_uc_quantity(&$element, &$form_state) {
+  dpm($element);
   if (!preg_match('/^\d+$/', $element['#value'])) {
-    form_error($element, t('The quantity must be an integer.'));
+    // form_error($element, t('The quantity must be an integer.'));
   }
   elseif (empty($element['#allow_zero']) && !$element['#value']) {
     form_error($element, t('The quantity cannot be zero.'));
