@@ -169,6 +169,20 @@ function uc_product_menu() {
     'weight' => -10,
     'type' => MENU_LOCAL_TASK,
   );
+  $items['product/%uc_product'] = array(
+    'title' => 'View product',
+    'page callback' => 'uc_product_product_view',
+    'page arguments' => array(1),
+    'access callback' => TRUE,//'uc_product_edit_access',
+    'access arguments' => array(1),
+    'weight' => -10,
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['product/%uc_product/view'] = array(
+    'title' => 'Edit product',
+    'weight' => -10,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
 
   return $items;
 }
@@ -245,6 +259,11 @@ function uc_product_feature_access($node) {
  */
 function uc_product_theme() {
   return array(
+    'product' => array(
+      'render element' => 'elements',
+      'template' => 'templates/product',
+      'file' => 'uc_product.theme.inc',
+    ),
     'uc_product_model' => array(
       'variables' => array('model' => '', 'view_mode' => 'full', 'attributes' => array()),
       'file' => 'uc_product.theme.inc',
@@ -755,7 +774,6 @@ function uc_product_update($node) {
 }
 
 function uc_product_load($nid) {
-  dpm($nid);
   return entity_load('uc_product', $nid);
 }
 
@@ -886,11 +904,15 @@ function uc_product_view_ajax_commands($form_state, $keys) {
 /**
  * Implements hook_view().
  */
-function uc_product_view($node, $view_mode) {
+function uc_product_product_view($product, $view_mode = 'full', $langcode = NULL) {
+  if (!isset($langcode)) {
+    $langcode = $GLOBALS['language_content']->langcode;
+  }
+
   // Give modules a chance to alter this product.  If it is a variant, this will
   // have been done already by uc_product_load_variant(), so we check a flag to
   // be sure not to alter twice -- cf. entity_prepare_view().
-  $variant = empty($node->variant) ? _uc_product_get_variant($node) : $node;
+  $variant = empty($product->variant) ? _uc_product_get_variant($product) : $product;
 
   // Skip the add to cart form in comment reply forms.
   if (arg(0) != 'comment' && arg(1) != 'reply') {
@@ -904,23 +926,23 @@ function uc_product_view($node, $view_mode) {
     }
   }
 
-  $node->content['display_price'] = array(
+  $product->content['display_price'] = array(
     '#theme' => 'uc_product_price',
     '#value' => isset($variant->price) ? $variant->price : $variant->sell_price,
     '#suffixes' => array(),
     '#attributes' => array(
       'class' => array(
         'display-price',
-        'uc-product-' . $node->nid,
+        'uc-product-' . $product->nid,
       ),
     ),
   );
-  $node->content['model'] = array(
+  $product->content['model'] = array(
     '#theme' => 'uc_product_model',
     '#model' => $variant->model,
     '#view_mode' => $view_mode,
   );
-  $node->content['list_price'] = array(
+  $product->content['list_price'] = array(
     '#theme' => 'uc_product_price',
     '#title' => t('List price:'),
     '#value' => $variant->list_price,
@@ -930,19 +952,19 @@ function uc_product_view($node, $view_mode) {
       ),
     ),
   );
-  $node->content['cost'] = array(
+  $product->content['cost'] = array(
     '#theme' => 'uc_product_price',
     '#title' => t('Cost:'),
     '#value' => $variant->cost,
     '#attributes' => array(
       'class' => array(
         'cost',
-        'uc-product-' . $node->nid,
+        'uc-product-' . $product->nid,
       ),
     ),
     '#access' => user_access('administer products'),
   );
-  $node->content['sell_price'] = array(
+  $product->content['sell_price'] = array(
     '#theme' => 'uc_product_price',
     '#title' => t('Price:'),
     '#value' => $variant->sell_price,
@@ -952,18 +974,18 @@ function uc_product_view($node, $view_mode) {
       ),
     ),
   );
-  $node->content['weight'] = array(
+  $product->content['weight'] = array(
     '#theme' => 'uc_product_weight',
     '#amount' => $variant->weight,
     '#units' => $variant->weight_units,
     '#view_mode' => $view_mode,
     '#attributes' => array(
       'class' => array(
-        'uc-product-' . $node->nid,
+        'uc-product-' . $product->nid,
       ),
     ),
   );
-  $node->content['dimensions'] = array(
+  $product->content['dimensions'] = array(
     '#theme' => 'uc_product_dimensions',
     '#length' => $variant->length,
     '#width' => $variant->width,
@@ -973,16 +995,39 @@ function uc_product_view($node, $view_mode) {
   );
 
   if (isset($add_to_cart_form)) {
-    $node->content['add_to_cart'] = array(
+    $product->content['add_to_cart'] = array(
       '#theme' => 'uc_product_add_to_cart',
       '#view_mode' => $view_mode,
       '#form' => $add_to_cart_form,
     );
   }
 
-  $node->content['#node'] = $variant;
+  $product->content['#product'] = $variant;
 
-  return $node;
+  $build = $product->content;
+  // We don't need duplicate rendering info in product->content.
+  unset($product->content);
+
+  $build += array(
+    '#theme' => 'product__' . $product->type . '__' . $view_mode,
+    '#product' => $product,
+    '#view_mode' => $view_mode,
+    '#langcode' => $langcode,
+  );
+
+  // Add contextual links for this product, except when the product is already being
+  // displayed on its own page. Modules may alter this behavior (for example,
+  // to restrict contextual links to certain display modes) by implementing
+  // hook_product_view_alter().
+  if (!empty($product->nid) && !($view_mode == 'full')) {
+    $build['#contextual_links']['product'] = array('product', array($product->nid));
+  }
+
+  // Allow modules to modify the structured product.
+  $type = 'product';
+  backdrop_alter(array('product_view', 'entity_view'), $build, $type);
+
+  return $build;
 }
 
 /**
@@ -994,10 +1039,13 @@ function uc_product_view($node, $view_mode) {
  * @see theme()
  * @see MODULE_preprocess_HOOK()
  */
-function uc_product_preprocess_node(&$variables) {
-  if (uc_product_is_product($variables['type'])) {
-    array_unshift($variables['theme_hook_suggestions'], 'node__product');
+function uc_product_preprocess_product(&$variables) {
+  $elements = $variables['elements'];
+  foreach (element_children($elements) as $element) {
+    $variables[$element] = $elements[$element];
   }
+  $variables['product'] = $elements['#product'];
+  dpm($variables);
 }
 
 /**
