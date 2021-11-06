@@ -82,7 +82,7 @@ function uc_product_menu() {
   }
  */
 
-  // Insert subitems into the edit node page for product types.
+/*   // Insert subitems into the edit node page for product types.
   $items['product/%product/edit/product'] = array(
     'title' => 'Product',
     'access callback' => 'uc_product_edit_access',
@@ -121,7 +121,7 @@ function uc_product_menu() {
       'file' => 'uc_product.admin.inc',
     );
   }
-
+ */
   $items['admin/store/settings/products/defaults'] = array(
     'access arguments' => array('administer products'),
     'page callback' => 'uc_product_image_defaults',
@@ -148,8 +148,16 @@ function uc_product_menu() {
     'page arguments' => array('uc_product_class_delete_confirm', 4),
     'file' => 'uc_product.admin.inc',
   );
-  foreach (uc_product_class_load(NULL, TRUE) as $type_name => $type) {
-    $items['admin/store/products/add/' . $type_name] = array(
+  $items['admin/store/products/add'] = array(
+    'title' => 'Add product',
+    'title callback' => 'check_plain',
+    'page callback' => 'uc_product_add',
+    'access callback' => TRUE, // 'node_access',
+  );
+  $classes = uc_product_class_load(NULL, TRUE);
+  foreach ($classes as $type_name => $type) {
+    $key = str_replace('_', '-', $type_name);
+    $items['admin/store/products/add/' . $key] = array(
       'title' => $type->name,
       'title callback' => 'check_plain',
       'page callback' => 'uc_product_add',
@@ -160,28 +168,26 @@ function uc_product_menu() {
       // 'file' => 'node.pages.inc',
     );
   }
-  $items['product/%uc_product/edit'] = array(
-    'title' => 'Edit product',
-    'page callback' => 'backdrop_get_form',
-    'page arguments' => array('uc_product_product_form', 1),
-    'access callback' => TRUE,//'uc_product_edit_access',
-    'access arguments' => array(1),
-    'weight' => -10,
-    'type' => MENU_LOCAL_TASK,
-  );
   $items['product/%uc_product'] = array(
     'title' => 'View product',
     'page callback' => 'uc_product_product_view',
     'page arguments' => array(1),
     'access callback' => TRUE,//'uc_product_edit_access',
     'access arguments' => array(1),
-    'weight' => -10,
-    'type' => MENU_LOCAL_TASK,
   );
   $items['product/%uc_product/view'] = array(
-    'title' => 'Edit product',
+    'title' => 'View product',
     'weight' => -10,
     'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  $items['product/%uc_product/edit'] = array(
+    'title' => 'Edit',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('uc_product_product_form', 1),
+    'access callback' => TRUE,//'uc_product_edit_access',
+    'access arguments' => array(1),
+    'weight' => 0,
+    'type' => MENU_LOCAL_TASK,
   );
 
   return $items;
@@ -215,6 +221,9 @@ function uc_product_class_delete_access($class) {
  */
 function uc_product_admin_paths() {
   $paths = array(
+    'product/*' => TRUE,
+    'product/*/edit' => TRUE,
+    'product/*/edit/*' => TRUE,
     'node/*/edit/product' => TRUE,
     'node/*/edit/features' => TRUE,
     'node/*/edit/features/*' => TRUE,
