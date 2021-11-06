@@ -368,23 +368,24 @@ function uc_product_entity_info() {
     'uc_product' => array(
       'label' => t('Product'),
       'entity class' => 'UCProduct',
-      'controller class' => 'EntityPlusController',
+      'controller class' => 'EntityDatabaseStorageController',
       'base table' => 'uc_products',
       'fieldable' => TRUE,
       'entity keys' => array(
         'id' => 'nid',
         'name' => 'name',
         'label' => 'label',
+        'bundle' => 'type',
       ),
       'module' => 'uc_product',
       'static cache' => TRUE,
       'bundles' => array(),
+      'bundle keys' => array(
+        // todo: change to 'type' or something clearer.
+        'bundle' => 'type',
+      ),
       'configuration' => TRUE,
       'exportable' => TRUE,
-      'admin ui' => array(
-        'path' => 'admin/store/products',
-        // 'controller class' => 'UCProductUIController',
-      ),
       // 'export' => array(
         // 'default hook' => 'default_rules_configuration',
       // ),
@@ -531,7 +532,7 @@ function uc_product_product_form($form, &$form_state, $uc_product) {
     '#required' => TRUE,
     '#default_value' => $uc_product->model,
     '#description' => t('Product SKU/model.'),
-    '#weight' => 0,
+    //'#weight' => 0,
     '#size' => 32,
   );
 
@@ -539,7 +540,7 @@ function uc_product_product_form($form, &$form_state, $uc_product) {
     '#type' => 'container',
     '#prefix' => '<div class="uc-inline-form clearfix">',
     '#suffix' => '</div>',
-    '#weight' => 5,
+    //'#weight' => 5,
   );
 
   $form['prices']['list_price'] = array(
@@ -547,14 +548,14 @@ function uc_product_product_form($form, &$form_state, $uc_product) {
     '#title' => t('List price'),
     '#default_value' => $uc_product->list_price,
     '#description' => t('The listed MSRP.'),
-    '#weight' => 0,
+    //'#weight' => 0,
   );
   $form['prices']['cost'] = array(
     '#type' => 'uc_price',
     '#title' => t('Cost'),
     '#default_value' => $uc_product->cost,
     '#description' => t("Your store's cost."),
-    '#weight' => 1,
+    //'#weight' => 1,
   );
   $form['prices']['sell_price'] = array(
     '#type' => 'uc_price',
@@ -562,14 +563,14 @@ function uc_product_product_form($form, &$form_state, $uc_product) {
     '#required' => TRUE,
     '#default_value' => $uc_product->sell_price,
     '#description' => t('Customer purchase price.'),
-    '#weight' => 2,
+    //'#weight' => 2,
   );
 
   $form['shippable'] = array(
     '#type' => 'checkbox',
     '#title' => t('Product is shippable.'),
     '#default_value' => $uc_product->shippable,
-    '#weight' => 10,
+    //'#weight' => 10,
   );
 
   $form['weight'] = array(
@@ -581,7 +582,7 @@ function uc_product_product_form($form, &$form_state, $uc_product) {
         'input[name="shippable"]' => array('checked' => FALSE),
       ),
     ),
-    '#weight' => 15,
+    //'#weight' => 15,
   );
   $form['weight']['weight'] = array(
     '#type' => 'textfield',
@@ -612,7 +613,7 @@ function uc_product_product_form($form, &$form_state, $uc_product) {
         'input[name="shippable"]' => array('checked' => FALSE),
       ),
     ),
-    '#weight' => 20,
+    // '#weight' => 20,
   );
   $form['dimensions']['dim_length'] = array(
     '#type' => 'textfield',
@@ -651,7 +652,7 @@ function uc_product_product_form($form, &$form_state, $uc_product) {
     '#title' => t('Maximum package quantity'),
     '#default_value' => $uc_product->pkg_qty,
     '#description' => t('At most, how many of these items can fit in your largest box? Orders that exceed this value will be split into multiple packages when retrieving shipping quotes.'),
-    '#weight' => 25,
+    // '#weight' => 25,
     '#states' => array(
       'invisible' => array(
         'input[name="shippable"]' => array('checked' => FALSE),
@@ -665,7 +666,7 @@ function uc_product_product_form($form, &$form_state, $uc_product) {
       '#title' => t('Default quantity to add to cart'),
       '#default_value' => $uc_product->default_qty,
       '#description' => t('Use 0 to disable the quantity field next to the add to cart button.'),
-      '#weight' => 27,
+      // '#weight' => 27,
       '#allow_zero' => TRUE,
     );
   }
@@ -682,8 +683,10 @@ function uc_product_product_form($form, &$form_state, $uc_product) {
     '#description' => t("Specify a value to set this product's position in product lists.<br />Products in the same position will be sorted alphabetically."),
     '#delta' => 25,
     '#default_value' => $uc_product->ordering,
-    '#weight' => 30,
+    // '#weight' => 30,
   );
+  dpm($uc_product);
+  field_attach_form('uc_product', $uc_product, $form, $form_state, $uc_product->langcode);
 
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['submit'] = array(
@@ -742,12 +745,13 @@ function uc_product_form_insert($form, &$form_state) {
     $node->height = $node->dim_height;
   }
 dpm($node);
-  if (isset($node->nid)) {
-    backdrop_write_record('uc_products', $node, 'nid');
-  }
-  else {
-    backdrop_write_record('uc_products', $node);
-  }
+  $node->save();
+  // if (isset($node->nid)) {
+    // backdrop_write_record('uc_products', $node, 'nid');
+  // }
+  // else {
+    // backdrop_write_record('uc_products', $node);
+  // }
     
 }
 
@@ -1768,6 +1772,7 @@ function uc_product_class_load($class_id = NULL, $reset = FALSE) {
     $result = db_query("SELECT * FROM {uc_product_classes}");
     while ($class = $result->fetchObject()) {
       $class->locked = FALSE;
+      $class->type = $class->pcid;
       $classes[$class->pcid] = $class;
     }
 
@@ -1781,6 +1786,7 @@ function uc_product_class_load($class_id = NULL, $reset = FALSE) {
       $class += array(
         'pcid' => $pcid,
         'name' => $pcid,
+        'type' => $pcid,
         'description' => '',
       );
 

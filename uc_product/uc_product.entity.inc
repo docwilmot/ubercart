@@ -101,7 +101,7 @@ class UCProduct extends Entity {
    * Implements EntityInterface::entityType().
    */
   public function entityType() {
-    return 'product';
+    return 'uc_product';
   }
 
   /**
