@@ -9,6 +9,7 @@
  * Displays a list of product classes.
  */
 function uc_product_class_default() {
+  $options = array('destination' => current_path());
   $classes = uc_product_class_load();
   $header = array(t('Class ID'), t('Name'), t('Description'), t('Operations'));
   $rows = array();
@@ -17,12 +18,38 @@ function uc_product_class_default() {
     if (empty($class->locked)) {
       $ops[] = l(t('delete'), 'admin/store/products/classes/' . $class->pcid . '/delete');
     }
-    $rows[] = array(
-      check_plain($class->pcid),
-      check_plain($class->name),
-      filter_xss_admin($class->description),
-      implode(' ', $ops),
+
+    $links = array();
+    $links['edit'] = array(
+      'title' => t('Edit'),
+      'href' => 'admin/store/products/classes/' . $class->pcid . '/edit',
     );
+    if (empty($class->locked)) {
+      $links['delete'] = array(
+        'title' => t('Delete'),
+        'href' => 'admin/store/products/classes/' . $class->pcid . '/delete',
+      );
+    }
+    $links['manage'] = array(
+      'title' => t('Manage fields'),
+      'href' => 'admin/store/products/manage/' . $class->pcid . '/fields',
+      'query' => $options,
+    );
+    $links['display'] = array(
+      'title' => t('Manage display'),
+      'href' => 'admin/store/products/manage/' . $class->pcid . '/display',
+      'query' => $options,
+    );
+
+    $operations = array(
+      '#type' => 'dropbutton',
+      '#links' => $links,
+    );
+    $row[] = check_plain($class->pcid);
+    $row[] = check_plain($class->name);
+    $row[] = filter_xss_admin($class->description);
+    $row[] = backdrop_render($operations);
+    $rows[] = $row;
   }
 
   $build = array();
