@@ -160,6 +160,15 @@ function uc_product_menu() {
       // 'file' => 'node.pages.inc',
     );
   }
+  $items['product/%uc_product/edit'] = array(
+    'title' => 'Edit product',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('uc_product_product_form', 1),
+    'access callback' => TRUE,//'uc_product_edit_access',
+    'access arguments' => array(1),
+    'weight' => -10,
+    'type' => MENU_LOCAL_TASK,
+  );
 
   return $items;
 }
@@ -470,9 +479,9 @@ function uc_product_config_info() {
 function uc_product_product_form($form, &$form_state, $uc_product) {
   dpm($uc_product);
 
-  $form['type'] = array(
+  $form['uc_product'] = array(
     '#type' => 'value',
-    '#value' => $uc_product->type,
+    '#value' => $uc_product,
   );
   $form['title'] = array(
     '#type' => 'textfield',
@@ -686,6 +695,7 @@ function uc_product_prepare($node) {
     'default_qty' => 1,
     'shippable' => config_get('uc_product.settings', 'uc_product_shippable_' . $node->type),
     'ordering' => 0,
+    'created' => time(),
   );
 
   foreach ($defaults as $key => $value) {
@@ -700,8 +710,9 @@ function uc_product_prepare($node) {
  */
 function uc_product_form_insert($form, &$form_state) {
   form_state_values_clean($form_state);
-  $node = (object) $form_state['values'];
+  $node = $form_state['values']['uc_product'];
   uc_product_prepare($node);
+  entity_form_submit_build_entity('uc_product', $node, $form, $form_state);
   if (isset($node->dim_length)) {
     $node->length = $node->dim_length;
   }
@@ -712,8 +723,13 @@ function uc_product_form_insert($form, &$form_state) {
     $node->height = $node->dim_height;
   }
 dpm($node);
-
-  backdrop_write_record('uc_products', $node);
+  if (isset($node->nid)) {
+    backdrop_write_record('uc_products', $node, 'nid');
+  }
+  else {
+    backdrop_write_record('uc_products', $node);
+  }
+    
 }
 
 /**
@@ -738,20 +754,10 @@ function uc_product_update($node) {
   }
 }
 
-// function uc_product_load($nodes) {
-  // $vids = array();
-  // foreach ($nodes as $node) {
-    // $vids[$node->nid] = $node->vid;
-  // }
-
-  // $result = db_query('SELECT nid, model, list_price, cost, sell_price, weight, weight_units, length, width, height, length_units, pkg_qty, default_qty, ordering, shippable FROM {uc_products} WHERE vid IN (:vids)', array(':vids' => $vids));
-  // foreach ($result as $node) {
-    // foreach ($node as $field => $value) {
-      // $nodes[$node->nid]->$field = $value;
-    // }
-    // $nodes[$node->nid]->price = $nodes[$node->nid]->sell_price;
-  // }
-// }
+function uc_product_load($nid) {
+  dpm($nid);
+  return entity_load('uc_product', $nid);
+}
 
 /**
  * Gets a specific, cloned, altered variant of a product node.
