@@ -92,8 +92,12 @@ class UbercartTestHelper extends BackdropWebTestCase {
       'ordering' => mt_rand(-25, 25),
       'shippable' => TRUE,
     );
+    
 
-    return $this->backdropCreateNode($product);
+    $product_entity = entity_create('uc_product', $product);
+    $product_entity->save();
+
+    return $product_entity;
   }
 
   /**

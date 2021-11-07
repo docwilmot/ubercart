@@ -1152,18 +1152,13 @@ function uc_cart_update_item($item) {
  */
 function uc_cart_add_item($nid, $qty = 1, $data = NULL, $cid = NULL, $msg = TRUE, $check_redirect = TRUE, $rebuild = TRUE) {
   $cid = $cid ? $cid : uc_cart_get_id();
-  $node = node_load($nid);
+  $node = uc_product_load($nid);
 
   if (is_null($data)) {
     $data = array('module' => 'uc_product');
   }
   if (!isset($data['module'])) {
     $data['module'] = 'uc_product';
-  }
-
-  if (!uc_product_is_product($node->type)) {
-    backdrop_set_message(t('@title is not a product. Unable to add to cart.', array('@title' => $node->title)), 'error');
-    return;
   }
 
   $result = module_invoke_all('uc_add_to_cart', $nid, $qty, $data);

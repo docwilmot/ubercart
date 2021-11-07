@@ -829,15 +829,12 @@ function uc_product_product_view($product, $view_mode = 'full', $langcode = NULL
   // be sure not to alter twice -- cf. entity_prepare_view().
   $variant = empty($product->variant) ? _uc_product_get_variant($product) : $product;
 
-  // Skip the add to cart form in comment reply forms.
-  if (arg(0) != 'comment' && arg(1) != 'reply') {
-    // Build the 'add to cart' form, and use the updated variant based on data
-    // provided by the form (e.g. attribute default options).
-    if (module_exists('uc_cart') && $variant->nid && empty($variant->data['display_only'])) {
-      $add_to_cart_form = backdrop_get_form('uc_product_add_to_cart_form_' . $variant->nid, $variant);
-      if (config_get('uc_product.settings', 'uc_product_update_node_view')) {
-        $variant = $add_to_cart_form['node']['#value'];
-      }
+  // Build the 'add to cart' form, and use the updated variant based on data
+  // provided by the form (e.g. attribute default options).
+  if (module_exists('uc_cart') && $variant->nid && empty($variant->data['display_only'])) {
+    $add_to_cart_form = backdrop_get_form('uc_product_add_to_cart_form_' . $variant->nid, $variant);
+    if (config_get('uc_product.settings', 'uc_product_update_node_view')) {
+      $variant = $add_to_cart_form['node']['#value'];
     }
   }
 
@@ -1186,7 +1183,7 @@ function uc_product_uc_store_status() {
  * Implements hook_uc_cart_display().
  */
 function uc_product_uc_cart_display($item) {
-  $node = node_load($item->nid);
+  $node = uc_product_load($item->nid);
 
   $element = array();
   $element['nid'] = array(
@@ -1334,10 +1331,10 @@ function uc_catalog_buy_it_now_form_submit($form, &$form_state) {
 }
 
 /**
- * Form to add the $node product to the cart.
+ * Form to add the product to the cart.
  *
  * @param $node
- *   A product node.
+ *   A product.
  *
  * @see uc_product_forms()
  * @see uc_product_add_to_cart_form_submit()

@@ -127,24 +127,25 @@ class UbercartProductTestCase extends UbercartTestHelper {
 
   public function testProductQuantity() {
     config_set('uc_product.settings', 'uc_product_add_to_cart_qty', TRUE);
+    debug(entity_load_multiple('uc_product'));
 
     // Check zero quantity message.
-    $this->backdropPost('node/' . $this->product->nid, array('qty' => '0'), 'Add to cart');
+    $this->backdropPost('product/' . $this->product->nid, array('qty' => '0'), 'Add to cart');
     $this->assertText('The quantity cannot be zero.');
 
     // Check invalid quantity messages.
-    $this->backdropPost('node/' . $this->product->nid, array('qty' => 'x'), 'Add to cart');
+    $this->backdropPost('product/' . $this->product->nid, array('qty' => 'x'), 'Add to cart');
     $this->assertText('The quantity must be an integer.');
 
-    $this->backdropPost('node/' . $this->product->nid, array('qty' => '1a'), 'Add to cart');
+    $this->backdropPost('product/' . $this->product->nid, array('qty' => '1a'), 'Add to cart');
     $this->assertText('The quantity must be an integer.');
 
     // Check cart add message.
-    $this->backdropPost('node/' . $this->product->nid, array('qty' => '1'), 'Add to cart');
+    $this->backdropPost('product/' . $this->product->nid, array('qty' => '1'), 'Add to cart');
     $this->assertText($this->product->title . ' added to your shopping cart.');
 
     // Check cart update message.
-    $this->backdropPost('node/' . $this->product->nid, array('qty' => '1'), 'Add to cart');
+    $this->backdropPost('product/' . $this->product->nid, array('qty' => '1'), 'Add to cart');
     $this->assertText('Your item(s) have been updated.');
   }
 
