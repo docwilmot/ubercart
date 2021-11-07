@@ -27,7 +27,7 @@ function uc_product_menu() {
   // admin/store/products/view is provided by Views.
   $items['admin/store/products/classes'] = array(
     'title' => 'Manage classes',
-    'description' => 'Create and edit product node types.',
+    'description' => 'Create and edit product types.',
     'access arguments' => array('administer product classes'),
     'page callback' => 'uc_product_class_default',
     'weight' => -2,
@@ -205,10 +205,10 @@ function uc_product_permission() {
 /**
  * Menu access callback for 'product/%uc_product/features'.
  */
-function uc_product_feature_access($node) {
+function uc_product_feature_access($uc_product) {
   global $user;
-  return uc_product_is_product($node) && $node->type != 'product_kit' &&
-    ((user_access('administer product features') || (user_access('administer own product features') && ($user->uid == $node->uid))));
+  return uc_product_is_product($uc_product) && $uc_product->type != 'product_kit' &&
+    ((user_access('administer product features') || (user_access('administer own product features') && ($user->uid == $uc_product->uid))));
 }
 
 /**
@@ -409,11 +409,11 @@ function uc_product_forms($form_id, $args) {
 }
 
 /**
- * Menu access callback for 'node/%node/edit/product'.
+ * Menu access callback for 'product/%uc_product/edit'.
  */
-function uc_product_edit_access($node) {
-  // Re-inherit access callback for 'node/%node/edit'.
-  return uc_product_is_product($node) && node_access('update', $node);
+function uc_product_edit_access($uc_product) {
+  // Re-inherit access callback for 'uc_product/%uc_product/edit'.
+  return uc_product_is_product($uc_product) && uc_product_access('update', $uc_product);
 }
 
 /**
@@ -658,7 +658,7 @@ function uc_product_product_form($form, &$form_state, $uc_product) {
 /**
  * Implements hook_prepare().
  */
-function uc_product_prepare($node) {
+function uc_product_prepare($uc_product) {
   $defaults = array(
     'model' => '',
     'list_price' => 0,
@@ -672,14 +672,14 @@ function uc_product_prepare($node) {
     'length_units' => config_get('uc_store.settings', 'uc_length_unit'),
     'pkg_qty' => 1,
     'default_qty' => 1,
-    'shippable' => config_get('uc_product.settings', 'uc_product_shippable_' . $node->type),
+    'shippable' => config_get('uc_product.settings', 'uc_product_shippable_' . $uc_product->type),
     'ordering' => 0,
     'created' => time(),
   );
 
   foreach ($defaults as $key => $value) {
-    if (!isset($node->$key)) {
-      $node->$key = $value;
+    if (!isset($uc_product->$key)) {
+      $uc_product->$key = $value;
     }
   }
 }
@@ -689,64 +689,41 @@ function uc_product_prepare($node) {
  */
 function uc_product_form_insert($form, &$form_state) {
   form_state_values_clean($form_state);
-  $node = $form_state['values']['uc_product'];
-  uc_product_prepare($node);
-  entity_form_submit_build_entity('uc_product', $node, $form, $form_state);
-  if (isset($node->dim_length)) {
-    $node->length = $node->dim_length;
+  $uc_product = $form_state['values']['uc_product'];
+  uc_product_prepare($uc_product);
+  entity_form_submit_build_entity('uc_product', $uc_product, $form, $form_state);
+  if (isset($uc_product->dim_length)) {
+    $uc_product->length = $uc_product->dim_length;
   }
-  if (isset($node->dim_width)) {
-    $node->width = $node->dim_width;
+  if (isset($uc_product->dim_width)) {
+    $uc_product->width = $uc_product->dim_width;
   }
-  if (isset($node->dim_height)) {
-    $node->height = $node->dim_height;
+  if (isset($uc_product->dim_height)) {
+    $uc_product->height = $uc_product->dim_height;
   }
-dpm($node);
-  $node->save();
-  // if (isset($node->nid)) {
-    // backdrop_write_record('uc_products', $node, 'nid');
+dpm($uc_product);
+  $uc_product->save();
+  // if (isset($uc_product->nid)) {
+    // backdrop_write_record('uc_products', $uc_product, 'nid');
   // }
   // else {
-    // backdrop_write_record('uc_products', $node);
+    // backdrop_write_record('uc_products', $uc_product);
   // }
     
 }
 
-/**
- * Implements hook_update().
- */
-function uc_product_update($node) {
-  if (isset($node->dim_length)) {
-    $node->length = $node->dim_length;
-  }
-  if (isset($node->dim_width)) {
-    $node->width = $node->dim_width;
-  }
-  if (isset($node->dim_height)) {
-    $node->height = $node->dim_height;
-  }
-
-  if (!empty($node->revision)) {
-    backdrop_write_record('uc_products', $node);
-  }
-  else {
-    backdrop_write_record('uc_products', $node, 'vid');
-  }
-}
 
 function uc_product_load($nid) {
   return entity_load('uc_product', $nid);
 }
 
 /**
- * Gets a specific, cloned, altered variant of a product node.
+ * Gets a specific, cloned, altered variant of a product.
  *
- * Generally, you should always use uc_product_load_variant() instead,
- * except when node_load() cannot be invoked, e.g. when implementing
- * hook_node_load().
+ * Generally, you should always use uc_product_load_variant() instead.
  *
- * @param $node
- *   The product node to alter. Throws an exception if this is already a
+ * @param $uc_product
+ *   The product to alter. Throws an exception if this is already a
  *   product variant.
  * @param $data
  *   Optional data to add to the product before invoking the alter hooks.
@@ -757,30 +734,30 @@ function uc_product_load($nid) {
  * @throws \Exception
  *   If the caller tries to create a variant of a variant.
  */
-function _uc_product_get_variant($node, $data = FALSE) {
-  if (!empty($node->variant)) {
+function _uc_product_get_variant($uc_product, $data = FALSE) {
+  if (!empty($uc_product->variant)) {
     throw new Exception(t('Cannot create a variant of a variant.'));
   }
-  $node = clone $node;
+  $uc_product = clone $uc_product;
   if (!empty($data)) {
-    $node->data = $data;
+    $uc_product->data = $data;
   }
 
-  // Ensure that $node->data is an array (user module leaves it serialized).
-  if (isset($node->data) && !is_array($node->data)) {
-    $node->data = unserialize($node->data);
+  // Ensure that $uc_product->data is an array (user module leaves it serialized).
+  if (isset($uc_product->data) && !is_array($uc_product->data)) {
+    $uc_product->data = unserialize($uc_product->data);
   }
 
-  backdrop_alter('uc_product', $node);
-  $node->variant = TRUE;
-  if (!isset($node->data['module'])) {
-    $node->data['module'] = 'uc_product';
+  backdrop_alter('uc_product', $uc_product);
+  $uc_product->variant = TRUE;
+  if (!isset($uc_product->data['module'])) {
+    $uc_product->data['module'] = 'uc_product';
   }
-  return $node;
+  return $uc_product;
 }
 
 /**
- * Loads a specific altered variant of a product node.
+ * Loads a specific altered variant of a product.
  *
  * The (possibly cached) base product remains unaltered.
  *
@@ -791,11 +768,11 @@ function _uc_product_get_variant($node, $data = FALSE) {
  *
  * @return
  *   A variant of the product, altered based on the provided data, or FALSE
- *   if the node is not found.
+ *   if the product is not found.
  */
 function uc_product_load_variant($nid, $data = FALSE) {
-  if ($node = node_load($nid)) {
-    return _uc_product_get_variant($node, $data);
+  if ($uc_product = uc_product_load($nid)) {
+    return _uc_product_get_variant($uc_product, $data);
   }
   else {
     return FALSE;
@@ -807,23 +784,23 @@ function uc_product_load_variant($nid, $data = FALSE) {
  *
  * Invokes rules event to allow product modifications.
  */
-function uc_product_uc_product_alter(&$node) {
+function uc_product_uc_product_alter(&$uc_product) {
   if (module_exists('rules')) {
-    rules_invoke_event('uc_product_load', $node);
+    rules_invoke_event('uc_product_load', $uc_product);
   }
 }
 
 /**
  * Implements hook_delete().
  */
-function uc_product_delete(&$node) {
-  $features = uc_product_feature_load_multiple($node->nid);
+function uc_product_delete(&$uc_product) {
+  $features = uc_product_feature_load_multiple($uc_product->nid);
   foreach ($features as $feature) {
     uc_product_feature_delete($feature->pfid);
   }
 
   db_delete('uc_products')
-    ->condition('nid', $node->nid)
+    ->condition('nid', $uc_product->nid)
     ->execute();
 }
 
@@ -1012,14 +989,14 @@ function uc_product_preprocess_product(&$variables) {
 /**
  * Implements hook_preprocess_page().
  *
- * Adds a body class to product node pages.
+ * Adds a body class to product pages.
  *
  * @see html.tpl.php
  */
 function uc_product_preprocess_page(&$variables) {
-  if ($node = menu_get_object()) {
-    if (uc_product_is_product($node)) {
-      $variables['classes'][] = 'uc-product-node';
+  if ($uc_product = menu_get_object()) {
+    if (uc_product_is_product($uc_product)) {
+      $variables['classes'][] = 'uc-product';
     }
   }
 }
@@ -1042,14 +1019,14 @@ function uc_product_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
- * After the node is saved, redirects to the node edit page.
+ * After the product is saved, redirects to the product edit page.
  *
  * Some modules add local tasks to product edit forms, but only after it has an
  * nid. Redirecting facilitates the common workflow of continuing to those
  * tasks.
  */
 function uc_product_save_continue_submit($form, &$form_state) {
-  $form_state['redirect'] = 'node/' . $form_state['nid'] . '/edit';
+  $form_state['redirect'] = 'product/' . $form_state['nid'] . '/edit';
 }
 
 /**
@@ -1127,7 +1104,7 @@ function uc_product_field_extra_fields() {
   $extra = array();
 
   foreach (uc_product_types() as $type) {
-    $extra['node'][$type] = array(
+    $extra['uc_product'][$type] = array(
       'display' => array(
         'display_price' => array(
           'label' => t('Display price'),
@@ -1183,7 +1160,7 @@ function uc_product_field_extra_fields() {
  * is removed.
  */
 function uc_product_field_delete_instance($instance) {
-  if ($instance['entity_type'] == 'node' && $instance['field_name'] == config_get('uc_product.settings', 'uc_image_' . $instance['bundle'])) {
+  if ($instance['entity_type'] == 'uc_product' && $instance['field_name'] == config_get('uc_product.settings', 'uc_image_' . $instance['bundle'])) {
     config_clear('uc_product', 'uc_image_' . $instance['bundle']);
   }
 }
@@ -1801,10 +1778,10 @@ function uc_product_feature_data($fid, $key) {
  *
  * @ingroup forms
  */
-function uc_product_feature_form($form, &$form_state, $node, $feature) {
+function uc_product_feature_form($form, &$form_state, $uc_product, $feature) {
   $form['nid'] = array(
     '#type' => 'hidden',
-    '#value' => $node->nid,
+    '#value' => $uc_product->nid,
   );
 
   // Forms to add a feature are only given an empty array.
@@ -1822,29 +1799,29 @@ function uc_product_feature_form($form, &$form_state, $node, $feature) {
   );
   $form['actions']['cancel'] = array(
     '#type' => 'markup',
-    '#markup' => l(t('Cancel'), 'product/' . $node->nid . '/features'),
+    '#markup' => l(t('Cancel'), 'product/' . $uc_product->nid . '/features'),
   );
 
   return $form;
 }
 
 /**
- * Saves a product feature to a product node.
+ * Saves a product feature to a product.
  *
  * @param $data
  *   An array consisting of the following keys:
  *   - pfid: (optional) When editing an existing product feature, the numeric
  *     ID of the feature.
- *   - nid: The numeric ID of the product node.
+ *   - nid: The numeric ID of the product.
  *   - fid: The string ID of the feature type.
  *   - description: The string describing the feature for the overview table.
  */
 function uc_product_feature_save(&$data) {
-  if (empty($data['nid']) && arg(0) == 'node' && intval(arg(1)) > 0) {
+  if (empty($data['nid']) && arg(0) == 'product' && intval(arg(1)) > 0) {
     $data['nid'] = intval(arg(1));
   }
   if (empty($data['pfid'])) {
-    if (arg(0) == 'node' && arg(3) == 'features' && intval(arg(5)) > 0) {
+    if (arg(0) == 'product' && arg(3) == 'features' && intval(arg(5)) > 0) {
       $data['pfid'] = intval(arg(5));
     }
   }
