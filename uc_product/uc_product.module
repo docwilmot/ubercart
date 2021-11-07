@@ -14,14 +14,15 @@
 function uc_product_menu() {
   $items = array();
 
+  // Temporarily till Views set up.
   $items['admin/store/products'] = array(
     'title' => 'Products',
     'description' => 'Administer products, classes, and more.',
-    'page callback' => 'backdrop_goto',
-    'page arguments' => array('admin/store/products/view'),
+    'page callback' => 'uc_product_products_default',
     'access arguments' => array('administer products'),
     'weight' => -2,
     'position' => 'left',
+    'file' => 'uc_product.admin.inc',
   );
   // admin/store/products/view is provided by Views.
   $items['admin/store/products/classes'] = array(
@@ -410,8 +411,8 @@ function uc_product_entity_info() {
     $entity_info['uc_product']['bundles'][$type] = array(
       'label' => $info->name,
       'admin' => array(
-        'path' => 'admin/store/products/manage/%uc_product_class',
-        'real path' => 'admin/store/products/manage/' . $type,
+        'path' => 'admin/store/products/classes/%uc_product_class',
+        'real path' => 'admin/store/products/classes/' . $type,
         'bundle argument' => 4,
         'access arguments' => array('administer products'),
       ),

@@ -8,6 +8,59 @@
 /**
  * Displays a list of product classes.
  */
+function uc_product_products_default() {
+  $products = entity_load_multiple('uc_product');
+  dpm($products);
+  $header = array(t('Product ID'), t('Name'), t('Description'), t('Operations'));
+  $rows = array();
+  foreach ($products as $product) {
+/*     $links = array();
+    $links['edit'] = array(
+      'title' => t('Edit'),
+      'href' => 'admin/store/products/classes/' . $class->pcid . '/edit',
+    );
+    if (empty($class->locked)) {
+      $links['delete'] = array(
+        'title' => t('Delete'),
+        'href' => 'admin/store/products/classes/' . $class->pcid . '/delete',
+      );
+    }
+    $links['manage'] = array(
+      'title' => t('Manage fields'),
+      'href' => 'admin/store/products/classes/' . $class->pcid . '/fields',
+      'query' => $options,
+    );
+    $links['display'] = array(
+      'title' => t('Manage display'),
+      'href' => 'admin/store/products/classes/' . $class->pcid . '/display',
+      'query' => $options,
+    );
+
+    $operations = array(
+      '#type' => 'dropbutton',
+      '#links' => $links,
+    );
+ */    $row[] = check_plain($product->nid);
+    $row[] = l($product->title, 'product/' . $product->nid);
+    $row[] = filter_xss_admin($product->title);
+    $row[] = ''; // backdrop_render($operations);
+    $rows[] = $row;
+  }
+
+  $build = array();
+  $build['product_classes'] = array(
+    '#theme' => 'table',
+    '#header' => $header,
+    '#rows' => $rows,
+    '#empty' => t('No product classes have been defined yet.'),
+  );
+
+  return $build;
+}
+
+/**
+ * Displays a list of product classes.
+ */
 function uc_product_class_default() {
   $options = array('destination' => current_path());
   $classes = uc_product_class_load();
@@ -32,12 +85,12 @@ function uc_product_class_default() {
     }
     $links['manage'] = array(
       'title' => t('Manage fields'),
-      'href' => 'admin/store/products/manage/' . $class->pcid . '/fields',
+      'href' => 'admin/store/products/classes/' . $class->pcid . '/fields',
       'query' => $options,
     );
     $links['display'] = array(
       'title' => t('Manage display'),
-      'href' => 'admin/store/products/manage/' . $class->pcid . '/display',
+      'href' => 'admin/store/products/classes/' . $class->pcid . '/display',
       'query' => $options,
     );
 
