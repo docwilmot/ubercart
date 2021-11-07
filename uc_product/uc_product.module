@@ -142,9 +142,8 @@ function uc_product_menu() {
   return $items;
 }
 
-function uc_product_add($type) {
+function uc_product_add($type = 'uc_product') {
   global $user;
-  dpm($type);
 
   $types = uc_product_class_load(NULL, TRUE);
   $uc_product = entity_create('uc_product', array(
@@ -152,7 +151,8 @@ function uc_product_add($type) {
     'uid' => $user->uid,
     'langcode' => LANGUAGE_NONE,
   ));
-  backdrop_set_title(t('Create @name', array('@name' => t($types[$type]->name))), PASS_THROUGH);
+  $product_name = isset($types[$type]) ? t($types[$type]->name) : t('Product');
+  backdrop_set_title(t('Create @name', array('@name' => $product_name)), PASS_THROUGH);
   $output = backdrop_get_form('uc_product_product_form', $uc_product);
 
   return $output;
@@ -352,7 +352,6 @@ function uc_product_entity_info() {
 
 
   $types = uc_product_class_load(NULL, TRUE);
-  dpm($types);
 
   foreach ($types as $type => $info) {
     $entity_info['uc_product']['bundles'][$type] = array(
@@ -454,7 +453,6 @@ function uc_product_config_info() {
  * @ingroup forms
  */
 function uc_product_product_form($form, &$form_state, $uc_product) {
-  dpm($uc_product);
 
   $form['uc_product'] = array(
     '#type' => 'value',
@@ -642,7 +640,7 @@ function uc_product_product_form($form, &$form_state, $uc_product) {
     '#default_value' => $uc_product->ordering,
     // '#weight' => 30,
   );
-  dpm($uc_product);
+
   field_attach_form('uc_product', $uc_product, $form, $form_state, $uc_product->langcode);
 
   $form['actions'] = array('#type' => 'actions');
@@ -701,7 +699,7 @@ function uc_product_form_insert($form, &$form_state) {
   if (isset($uc_product->dim_height)) {
     $uc_product->height = $uc_product->dim_height;
   }
-dpm($uc_product);
+
   $uc_product->save();
   // if (isset($uc_product->nid)) {
     // backdrop_write_record('uc_products', $uc_product, 'nid');
@@ -709,7 +707,7 @@ dpm($uc_product);
   // else {
     // backdrop_write_record('uc_products', $uc_product);
   // }
-    
+  $form_state['redirect'] = 'product/' . $uc_product->nid;
 }
 
 
@@ -983,7 +981,6 @@ function uc_product_preprocess_product(&$variables) {
     $variables[$element] = $elements[$element];
   }
   $variables['product'] = $elements['#product'];
-  dpm($variables);
 }
 
 /**

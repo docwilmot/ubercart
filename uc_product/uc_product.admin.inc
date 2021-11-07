@@ -10,7 +10,7 @@
  */
 function uc_product_products_default() {
   $products = entity_load_multiple('uc_product');
-  dpm($products);
+
   $header = array(t('Product ID'), t('Name'), t('Description'), t('Operations'));
   $rows = array();
   foreach ($products as $product) {
@@ -333,7 +333,6 @@ function theme_uc_product_feature_add_form($variables) {
  */
 function uc_product_feature_add_form_submit($form, &$form_state) {
   $node = $form_state['build_info']['args'][0];
-  dpm($form_state['values']);
 
   $form_state['redirect'] = 'product/' . $node->nid . '/features/' . $form_state['values']['feature'] . '/add';
 }
