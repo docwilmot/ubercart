@@ -83,9 +83,6 @@ function uc_product_classes_features_revert($module) {
       db_delete('node_type')
         ->condition('type', $type_name)
         ->execute();
-      db_delete('uc_product_classes')
-        ->condition('pcid', $type_name)
-        ->execute();
     }
     // TODO migrate this
     uc_product_node_info(TRUE);

@@ -1,0 +1,9 @@
+{
+    "_config_name": "uc_product.class.product",
+    
+    "pcid": "product",
+    "name": "Product",
+    "description": "Use <em>products</em> to represent items for sale on the website, including all the unique information that can be attributed to a specific model number.",
+    "locked": false,
+    "type": "product"
+}

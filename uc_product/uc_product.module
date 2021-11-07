@@ -367,27 +367,6 @@ function uc_product_entity_info() {
 
   return $entity_info;
 }
-/**
- * Implements hook_node_type_update().
- *
- * Ensure product class names and descriptions are synchronised if the
- * content type is updated.
- */
-function uc_product_node_type_update($info) {
-  $existing_type = !empty($info->old_type) ? $info->old_type : $info->type;
-
-  db_update('uc_product_classes')
-    ->fields(array(
-      'pcid' => $info->type,
-      'name' => $info->name,
-      'description' => $info->description,
-    ))
-    ->condition('pcid', $existing_type)
-    ->execute();
-
-  // Reset static variable data and load new info.
-  uc_product_node_info(TRUE);
-}
 
 /**
  * Implements hook_forms().
@@ -1301,36 +1280,6 @@ function uc_product_uc_add_to_cart_data($form_values) {
 }
 
 /**
- * Implements hook_uc_product_class().
- */
-function uc_product_uc_product_class($pcid, $op) {
-  switch ($op) {
-    case 'insert':
-
-      /*
-      db_update('node_type')
-      ->fields(array(
-      'base' => 'uc_product',
-      'custom' => 0,
-      ))
-      ->condition('type', $pcid)
-      ->execute();
-       */
-
-      $result = db_query("SELECT n.vid, n.nid FROM {node} n LEFT JOIN {uc_products} p ON n.vid = p.vid WHERE n.type = :pcid AND p.vid IS NULL", array(':pcid' => $pcid));
-      foreach ($result as $node) {
-        $node->weight_units = config_get('uc_store.settings', 'uc_weight_unit');
-        $node->length_units = config_get('uc_store.settings', 'uc_length_unit');
-        $node->pkg_qty = 1;
-        $node->default_qty = 1;
-        $node->shippable = 1;
-        uc_product_insert($node);
-      }
-      break;
-  }
-}
-
-/**
  * Form builder for uc_catalog_buy_it_now_form().
  *
  * @see uc_product_forms()
@@ -1700,11 +1649,13 @@ function uc_product_class_load($class_id = NULL, $reset = FALSE) {
   if (!isset($classes) || $reset) {
     // Load classes from database.
     $classes = array();
-    $result = db_query("SELECT * FROM {uc_product_classes}");
-    while ($class = $result->fetchObject()) {
-      $class->locked = FALSE;
-      $class->type = $class->pcid;
-      $classes[$class->pcid] = $class;
+
+
+    $classes = array();
+    $config_names = config_get_names_with_prefix('uc_product.class.');
+    foreach ($config_names as $config_name) {
+      $class_data = config($config_name)->get();
+      $classes[$class_data['pcid']] = (object) $class_data;
     }
 
     // Merge any module-defined classes.
@@ -1930,7 +1881,7 @@ function uc_product_add_default_image_field($type = NULL) {
 
   $label = t('Image');
   $new_instance = array(
-    'entity_type' => 'node',
+    'entity_type' => 'uc_product',
     'label' => $label,
     'weight' => -2,
     'widget' => array(
@@ -1964,7 +1915,7 @@ function uc_product_add_default_image_field($type = NULL) {
     }
     $new_instance['field_name'] = $field_name;
 
-    $instance = field_info_instance('node', $field_name, $type);
+    $instance = field_info_instance('uc_product', $field_name, $type);
 
     // Only add the instance if it doesn't exist. Don't overwrite any changes.
     if (!$instance) {

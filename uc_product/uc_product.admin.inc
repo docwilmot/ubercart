@@ -67,6 +67,7 @@ function uc_product_class_default() {
   $header = array(t('Class ID'), t('Name'), t('Description'), t('Operations'));
   $rows = array();
   foreach ($classes as $class) {
+    $row = array();
     $ops = array(l(t('edit'), 'admin/store/products/classes/' . $class->pcid . '/edit'));
     if (empty($class->locked)) {
       $ops[] = l(t('delete'), 'admin/store/products/classes/' . $class->pcid . '/delete');
@@ -466,36 +467,28 @@ function uc_product_class_form_submit($form, &$form_state) {
   // Convert whitespace to underscores, and remove other non-alphanumeric characters.
   $pcid = preg_replace(array('/\s+/', '/\W/'), array('_', ''), strtolower($pcid));
 
-  $result = db_merge('uc_product_classes')
-    ->key(array('pcid' => $pcid))
-    ->fields(array(
-      'name' => $form_state['values']['name'],
-      'description' => $form_state['values']['description'],
-    ))
-    ->execute();
 
-  $type = new \stdClass();
-  $type->type = $pcid;
-  $type->name = $form_state['values']['name'];
-  $type->base = 'uc_product';
-  $type->module = 'uc_product';
-  $type->description = $form_state['values']['description'];
-  $type = node_type_set_defaults($type);
-  node_type_save($type);
+  $config = config('uc_product.class.' . $pcid);
+  $data = array(
+    'pcid' => $pcid,
+    'name' => $form_state['values']['name'],
+    'description' => $form_state['values']['description'],
+    'locked' => FALSE,
+    'type' => $pcid,
+  );
+  $config->setData($data);
+  $config->save();
 
   uc_product_node_info(TRUE);
 
-  if ($result == MergeQuery::STATUS_INSERT) {
+  if ($is_new) {
     module_invoke_all('uc_product_class', $pcid, 'insert');
   }
   else {
     module_invoke_all('uc_product_class', $pcid, 'update');
   }
 
-  node_types_rebuild();
   if ($is_new) {
-    $type = node_type_get_type($pcid);
-    node_add_body_field($type, t('Description'));
     uc_product_add_default_image_field($pcid);
   }
   menu_rebuild();
@@ -518,10 +511,10 @@ function uc_product_class_delete_confirm($form, &$form_state, $class) {
   $description = t('The node type associated with this product class will revert to a standard node type.');
 
   // Find out how many nodes of this class exist and add to the description.
-  $count = db_query("SELECT COUNT(*) FROM {node} WHERE type = :pcid", array(':pcid' => $class->pcid))->fetchField();
+  $count = db_query("SELECT COUNT(*) FROM {uc_products} WHERE type = :pcid", array(':pcid' => $class->pcid))->fetchField();
 
   if ($count > 0) {
-    $description .= '<br />' . format_plural($count, 'There is 1 node of this type.', 'There are @count nodes of this type.');
+    $description .= '<br />' . format_plural($count, 'There is 1 product of this type.', 'There are @count products of this type.');
   }
 
   return confirm_form($form, $question, 'admin/store/products/classes', $description, t('Delete'), t('Cancel'));
@@ -533,18 +526,13 @@ function uc_product_class_delete_confirm($form, &$form_state, $class) {
  * @see uc_product_class_delete_confirm()
  */
 function uc_product_class_delete_confirm_submit($form, &$form_state) {
-  $type = node_type_get_type($form_state['values']['pcid']);
-  $type->base = 'node_content';
-  $type->custom = 1;
-  node_type_save($type);
+  $config = config('uc_product.class.' . $form_state['values']['pcid']);
+  $config->delete();
 
-  db_delete('uc_product_classes')
-    ->condition('pcid', $form_state['values']['pcid'])
-    ->execute();
   module_invoke_all('uc_product_class', $form_state['values']['pcid'], 'delete');
-  // TODO migrate This nedded?
+
   uc_product_node_info(TRUE);
-  node_types_rebuild();
+
   menu_rebuild();
 
   backdrop_set_message(t('Product class %type deleted.', array('%type' => $form_state['values']['pcid'])));

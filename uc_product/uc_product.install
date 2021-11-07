@@ -11,31 +11,6 @@
 function uc_product_schema() {
   $schema = array();
 
-  $schema['uc_product_classes'] = array(
-    'description' => 'The list of product node types.',
-    'fields' => array(
-      'pcid' => array(
-        'description' => 'The node type identifier.',
-        'type' => 'varchar',
-        'length' => 32,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'name' => array(
-        'description' => 'The human-readable name.',
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'description' => array(
-        'description' => 'The description of the node type.',
-        'type' => 'text',
-      ),
-    ),
-    'primary key' => array('pcid'),
-  );
-
   $schema['uc_product_features'] = array(
     'description' => 'Stores information of features added to products.',
     'fields' => array(

@@ -123,35 +123,6 @@ class UbercartProductTestCase extends UbercartTestHelper {
       'uc_product',
       t('The new content type has been created in the database.')
     );
-
-    // Make an existing node type a product class.
-    $type = $this->backdropCreateContentType();
-    $edit = array(
-      'pcid' => $type->type,
-      'name' => $type->name,
-      'description' => $type->description,
-    );
-    $node = $this->backdropCreateNode(array('type' => $type->type));
-
-    $this->backdropPost(
-      'admin/store/products/classes',
-      $edit,
-      t('Save')
-    );
-    $this->assertText(
-      t('Product class saved.'),
-      t('Product class form submitted.')
-    );
-
-    $type_config = config_get('node.type.' . $type->type);
-    $base = $type_config['base'];
-    $this->assertEqual(
-      $base,
-      'uc_product',
-      t('The new content type has been taken over by uc_product.'));
-
-    $this->backdropPost('node/' . $node->nid, array('qty' => '1'), 'Add to cart');
-    $this->assertText($node->title . ' added to your shopping cart.');
   }
 
   public function testProductQuantity() {
