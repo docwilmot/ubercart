@@ -32,7 +32,7 @@ class UbercartRolesTestCase extends UbercartTestHelper {
     // Add role assignment to the test product.
     $role = $this->backdropCreateRole(array('access content'));
     $this->backdropLogin($this->adminUser);
-    $this->backdropPost('node/' . $this->product->nid . '/edit/features', array('feature' => 'role'), t('Add'));
+    $this->backdropPost('product/' . $this->product->nid . '/features', array('feature' => 'role'), t('Add'));
     $edit = array(
       'uc_roles_role' => $role,
       'end_override' => TRUE,
@@ -68,7 +68,7 @@ class UbercartRolesTestCase extends UbercartTestHelper {
     // Add role assignment to the test product.
     $role = $this->backdropCreateRole(array('access content'));
     $this->backdropLogin($this->adminUser);
-    $this->backdropPost('node/' . $this->product->nid . '/edit/features', array('feature' => 'role'), t('Add'));
+    $this->backdropPost('product/' . $this->product->nid . '/features', array('feature' => 'role'), t('Add'));
     $edit = array(
       'uc_roles_role' => $role,
       'end_override' => TRUE,

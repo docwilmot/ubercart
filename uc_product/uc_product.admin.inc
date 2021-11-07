@@ -210,11 +210,11 @@ function uc_product_features($node, $fid = NULL, $pfid = NULL) {
     $operations = array(
       'edit' => array(
         'title' => t('edit'),
-        'href' => 'node/' . $node->nid . '/edit/features/' . $feature->fid . '/' . $feature->pfid,
+        'href' => 'product/' . $node->nid . '/features/' . $feature->fid . '/' . $feature->pfid,
       ),
       'delete' => array(
         'title' => t('delete'),
-        'href' => 'node/' . $node->nid . '/edit/features/' . $feature->fid . '/' . $feature->pfid . '/delete',
+        'href' => 'product/' . $node->nid . '/features/' . $feature->fid . '/' . $feature->pfid . '/delete',
       ),
     );
     $rows[] = array(
@@ -268,17 +268,17 @@ function uc_product_feature_edit($node, $fid, $pfid) {
       }
     }
     else {
-      backdrop_goto('node/' . $node->nid . '/edit/features');
+      backdrop_goto('product/' . $node->nid . '/features');
     }
   }
   else {
     backdrop_set_message(t('Error: Attempted to add a non-existent product feature type.'), 'error');
-    backdrop_goto('node/' . $node->nid . '/edit/features');
+    backdrop_goto('product/' . $node->nid . '/features');
   }
 
   if (empty($build)) {
     backdrop_set_message(t('Error: No form data was returned for that operation.'), 'error');
-    backdrop_goto('node/' . $node->nid . '/edit/features');
+    backdrop_goto('product/' . $node->nid . '/features');
   }
 
   return $build;
@@ -333,8 +333,9 @@ function theme_uc_product_feature_add_form($variables) {
  */
 function uc_product_feature_add_form_submit($form, &$form_state) {
   $node = $form_state['build_info']['args'][0];
+  dpm($form_state['values']);
 
-  $form_state['redirect'] = 'node/' . $node->nid . '/edit/features/' . $form_state['values']['feature'] . '/add';
+  $form_state['redirect'] = 'product/' . $node->nid . '/features/' . $form_state['values']['feature'] . '/add';
 }
 
 /**
@@ -347,7 +348,7 @@ function uc_product_feature_confirm_delete($form, &$form_state, $node, $fid, $fe
   $description = t('Are you sure you wish to delete this %feature?', array('%feature' => uc_product_feature_data($fid, 'title')))
     . '<div><b>' . t('Description') . ':</b><br />' . $feature['description'] . '</div><br />';
 
-  return confirm_form($form, check_plain($node->title), 'node/' . $node->nid . '/edit/features', $description, t('Delete'), t('Cancel'), 'pf_delete');
+  return confirm_form($form, check_plain($node->title), 'product/' . $node->nid . '/features', $description, t('Delete'), t('Cancel'), 'pf_delete');
 }
 
 /**
@@ -365,7 +366,7 @@ function uc_product_feature_confirm_delete_submit($form, &$form_state) {
     backdrop_set_message(t('The product feature has been deleted.'));
   }
 
-  $form_state['redirect'] = 'node/' . $node->nid . '/edit/features';
+  $form_state['redirect'] = 'product/' . $node->nid . '/features';
 }
 
 /**
@@ -413,7 +414,7 @@ function uc_product_class_form($form, &$form_state, $class = NULL) {
   $form['name'] = array(
     '#type' => 'textfield',
     '#title' => t('Class name'),
-    '#description' => t('The human-readable name of this content type as it should appear on the !create_content page.  There are no character restrictions on this name.', array('!create_content' => l(t('Create content'), 'node/add'))),
+    '#description' => t('The human-readable name of this content type as it should appear on the !create_content page.  There are no character restrictions on this name.', array('!create_content' => l(t('Create content'), 'product/add'))),
     '#default_value' => $classname,
     '#required' => TRUE,
   );
