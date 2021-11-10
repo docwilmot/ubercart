@@ -105,45 +105,45 @@ function uc_attribute_menu() {
   );
 
   // Insert subitems into the edit node page for product types.
-  $items['node/%node/edit/attributes'] = array(
+  $items['product/%uc_product/attributes'] = array(
     'title' => 'Attributes',
     'description' => 'Edit product attributes.',
     'page callback' => 'backdrop_get_form',
     'page arguments' => array('uc_object_attributes_form', 1, 'product', 'overview'),
-    'access callback' => 'uc_attribute_product_access',
+    'access callback' => TRUE,//'uc_attribute_product_access',
     'access arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
     'weight' => 1,
     'file' => 'uc_attribute.admin.inc',
   );
-  $items['node/%node/edit/attributes/add'] = array(
+  $items['product/%uc_product/attributes/add'] = array(
     'title' => 'Add an attribute',
     'description' => 'Add an attribute to this product.',
     'page callback' => 'backdrop_get_form',
     'page arguments' => array('uc_object_attributes_form', 1, 'product', 'add'),
-    'access callback' => 'uc_attribute_product_access',
+    'access callback' =>  TRUE,//'uc_attribute_product_access',
     'access arguments' => array(1),
     'type' => MENU_LOCAL_ACTION,
     'weight' => 1,
     'file' => 'uc_attribute.admin.inc',
   );
-  $items['node/%node/edit/options'] = array(
+  $items['product/%uc_product/options'] = array(
     'title' => 'Options',
     'description' => 'Administer product attribute options.',
     'page callback' => 'backdrop_get_form',
     'page arguments' => array('uc_object_options_form', 1, 'product'),
-    'access callback' => 'uc_attribute_product_option_access',
+    'access callback' =>  TRUE,//'uc_attribute_product_option_access',
     'access arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
     'weight' => 2,
     'file' => 'uc_attribute.admin.inc',
   );
-  $items['node/%node/edit/adjustments'] = array(
+  $items['product/%uc_product/adjustments'] = array(
     'title' => 'Adjustments',
     'description' => 'Administer SKU adjustments for different variants of this product.',
     'page callback' => 'backdrop_get_form',
     'page arguments' => array('uc_product_adjustments_form', 1),
-    'access callback' => 'uc_attribute_product_option_access',
+    'access callback' =>  TRUE,//'uc_attribute_product_option_access',
     'access arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
     'weight' => 3,
@@ -158,10 +158,10 @@ function uc_attribute_menu() {
  */
 function uc_attribute_admin_paths() {
   $paths = array(
-    'node/*/edit/attributes' => TRUE,
-    'node/*/edit/attributes/add' => TRUE,
-    'node/*/edit/options' => TRUE,
-    'node/*/edit/adjustments' => TRUE,
+    'product/*/attributes' => TRUE,
+    'product/*/attributes/add' => TRUE,
+    'product/*/options' => TRUE,
+    'product/*/adjustments' => TRUE,
   );
 
   return $paths;

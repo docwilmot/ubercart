@@ -583,6 +583,7 @@ function uc_attribute_option_delete_confirm_submit($form, &$form_state) {
  * @ingroup forms
  */
 function uc_object_attributes_form($form, &$form_state, $object, $type, $view = 'overview') {
+  dpm('pool');
   switch ($type) {
     case 'class':
       $class = $object;
@@ -599,7 +600,7 @@ function uc_object_attributes_form($form, &$form_state, $object, $type, $view = 
       $product = $object;
       $id = $product->nid;
       if (empty($product->title)) {
-        backdrop_goto('node/' . $id);
+        backdrop_goto('product/' . $id);
       }
       backdrop_set_title($product->title);
       $attributes = uc_product_get_attributes($id);
@@ -693,7 +694,7 @@ function uc_object_attributes_form($form, &$form_state, $object, $type, $view = 
     $form['actions']['add'] = array(
       '#type' => 'submit',
       '#value' => t('Add attributes'),
-      '#suffix' => l(t('Cancel'), $type == 'product' ? 'node/' . $id . '/edit/attributes' : 'admin/store/products/classes/' . $class->pcid . '/attributes'),
+      '#suffix' => l(t('Cancel'), $type == 'product' ? 'product/' . $id . '/attributes' : 'admin/store/products/classes/' . $class->pcid . '/attributes'),
       '#weight' => 0,
     );
   }
@@ -755,7 +756,7 @@ function theme_uc_object_attributes_form($variables) {
       $path = url('admin/store/products/classes/' . $form['id']['#value'] . '/attributes/add');
     }
     elseif ($form['type']['#value'] == 'product') {
-      $path = url('node/' . $form['id']['#value'] . '/edit/attributes/add');
+      $path = url('product/' . $form['id']['#value'] . '/attributes/add');
     }
 
     $output = theme('table', array(
@@ -881,7 +882,7 @@ function uc_object_attributes_form_submit($form, &$form_state) {
 
   if ($form_state['values']['type'] == 'product') {
     cache_clear_all($form_state['values']['id'], 'cache_entity_node');
-    $form_state['redirect'] = 'node/' . $form_state['values']['id'] . '/edit/attributes';
+    $form_state['redirect'] = 'product/' . $form_state['values']['id'] . '/attributes';
   }
   else {
     $form_state['redirect'] = 'admin/store/products/classes/' . $form_state['values']['id'] . '/attributes';
