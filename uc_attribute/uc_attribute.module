@@ -339,18 +339,14 @@ function uc_attribute_uc_form_alter(&$form, &$form_state, $form_id) {
 /**
  * Implements hook_node_load().
  */
-function uc_attribute_node_load($nodes, $types) {
-  $product_types = array_intersect(uc_product_types(), $types);
-
-  if (empty($product_types)) {
-    return;
-  }
-
-  foreach ($nodes as &$node) {
-    if (uc_product_is_product($node->type)) {
-      $attributes = uc_product_get_attributes($node->nid);
-      if (is_array($attributes) && !empty($attributes)) {
-        $node->attributes = $attributes;
+function uc_attribute_entity_load($nodes, $type) {
+  if ($type == 'uc_product') {
+    foreach ($nodes as &$node) {
+      if (uc_product_is_product($node->type)) {
+        $attributes = uc_product_get_attributes($node->nid);
+        if (is_array($attributes) && !empty($attributes)) {
+          $node->attributes = $attributes;
+        }
       }
     }
   }
@@ -1343,7 +1339,7 @@ function _uc_attribute_alter_form($id, &$product, $use_ajax) {
             if ($attribute->display != 3 && !isset($product->data['kit_id'])) {
               $use_ajax = $use_ajax || (count($priced_attributes) > 1);
               $data['attributes'] = array($attribute->aid => $option->oid) + $data['attributes'];
-              $variant = node_view(uc_product_load_variant($product->nid, $data), 'teaser');
+              $variant = uc_product_product_view(uc_product_load_variant($product->nid, $data), 'teaser');
               $display_price = uc_currency_format($variant['display_price']['#value']);
               break;
             }
@@ -1354,19 +1350,19 @@ function _uc_attribute_alter_form($id, &$product, $use_ajax) {
               // only build the base once.
               if (empty($base)) {
                 unset($data['attributes']);
-                $base = node_view(uc_product_load_variant($product->nid, $data), 'teaser');
+                $base = uc_product_product_view(uc_product_load_variant($product->nid, $data), 'teaser');
               }
               $data['attributes'] = array($attribute->aid => $option->oid);
-              $variant = node_view(uc_product_load_variant($product->nid, $data), 'teaser');
+              $variant = uc_product_product_view(uc_product_load_variant($product->nid, $data), 'teaser');
               $adjustment = $variant['display_price']['#value'] - $base['display_price']['#value'];
             }
             else {
               // Otherwise we compare against current total price.
               if (empty($selected)) {
-                $selected = node_view(uc_product_load_variant($product->nid, $data), 'teaser');
+                $selected = uc_product_product_view(uc_product_load_variant($product->nid, $data), 'teaser');
               }
               $data['attributes'] = array($attribute->aid => $option->oid) + $data['attributes'];
-              $variant = node_view(uc_product_load_variant($product->nid, $data), 'teaser');
+              $variant = uc_product_product_view(uc_product_load_variant($product->nid, $data), 'teaser');
               $adjustment = $variant['display_price']['#value'] - $selected['display_price']['#value'];
             }
             if ($adjustment != 0) {

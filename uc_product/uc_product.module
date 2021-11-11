@@ -314,6 +314,7 @@ function uc_product_node_info($reset = FALSE) {
       );
     }
   }
+  dpm($types);
   return $types;
 }
 
@@ -327,6 +328,32 @@ function uc_product_entity_info() {
       'entity class' => 'UCProduct',
       'controller class' => 'EntityDatabaseStorageController',
       'base table' => 'uc_products',
+      'fieldable' => TRUE,
+      'entity keys' => array(
+        'id' => 'nid',
+        'name' => 'name',
+        'label' => 'label',
+        'bundle' => 'type',
+      ),
+      'module' => 'uc_product',
+      'static cache' => TRUE,
+      'bundles' => array(),
+      'bundle keys' => array(
+        // todo: change to 'type' or something clearer.
+        'bundle' => 'type',
+      ),
+      'configuration' => TRUE,
+      'exportable' => TRUE,
+      // 'export' => array(
+        // 'default hook' => 'default_rules_configuration',
+      // ),
+      // 'access callback' => 'rules_config_access',
+    ),
+    'uc_product_variation' => array(
+      'label' => t('Product'),
+      'entity class' => 'UCProductVariation',
+      'controller class' => 'EntityDatabaseStorageController',
+      'base table' => 'uc_product_variations',
       'fieldable' => TRUE,
       'entity keys' => array(
         'id' => 'nid',
@@ -375,10 +402,12 @@ function uc_product_entity_info() {
  */
 function uc_product_forms($form_id, $args) {
   $forms = array();
+    dpm($args);
   if (isset($args[0]->nid) && isset($args[0]->type)) {
     $product = $args[0];
     // TODO migrate uc_product_info()
     if (in_array($product->type, array_keys(uc_product_node_info()))) {
+    dpm($args);
       $forms['uc_product_add_to_cart_form_' . $product->nid] = array('callback' => 'uc_product_add_to_cart_form');
       $forms['uc_catalog_buy_it_now_form_' . $product->nid] = array('callback' => 'uc_catalog_buy_it_now_form');
     }
@@ -667,8 +696,11 @@ function uc_product_prepare($uc_product) {
 function uc_product_form_insert($form, &$form_state) {
   form_state_values_clean($form_state);
   $uc_product = $form_state['values']['uc_product'];
+  dpm($uc_product);
   uc_product_prepare($uc_product);
+  dpm($uc_product);
   entity_form_submit_build_entity('uc_product', $uc_product, $form, $form_state);
+  dpm($uc_product);
   if (isset($uc_product->dim_length)) {
     $uc_product->length = $uc_product->dim_length;
   }
@@ -679,16 +711,49 @@ function uc_product_form_insert($form, &$form_state) {
     $uc_product->height = $uc_product->dim_height;
   }
 
-  $uc_product->save();
-  // if (isset($uc_product->nid)) {
-    // backdrop_write_record('uc_products', $uc_product, 'nid');
-  // }
-  // else {
-    // backdrop_write_record('uc_products', $uc_product);
-  // }
-  $form_state['redirect'] = 'product/' . $uc_product->nid;
+  $is_new = $uc_product->isNew();
+  // $uc_product->save($uc_product);
+  uc_product_save_product_variations($uc_product);
+
+dpm($uc_product);
+
+  //$form_state['redirect'] = 'product/' . $uc_product->nid;
 }
 
+
+function uc_product_save_product_variations($uc_product) {
+  if (isset($uc_product->attributes)) {
+
+    $query = new EntityFieldQuery();
+    $query->entityCondition('entity_type', 'uc_product_variation');
+    $query->entityCondition('pnid', $uc_product->nid);
+    $result = $query->execute();
+    $variations = entity_load_multiple('uc_product_variation', array_keys($result['uc_product_variation']));
+    dpm($variations);
+
+    foreach ($uc_product->attributes as $key => $attribute) {
+      if (isset($attribute->options)) {
+        foreach ($attribute->options as $option_key => $option) {
+          $settings = array(
+            'pnid' => $uc_product->nid,
+            'type' => $uc_product->type,
+            'langcode' => $uc_product->langcode,
+            'title' => $uc_product->title . $key . $option_key,
+            'uid' => $uc_product->uid,
+            'created' => time(),
+            'changed' => time(),
+            'aid' => $key,
+            'oid' => $option_key,
+          );
+          // $uc_product_variation = entity_create('uc_product_variation', $settings);
+          // $uc_product_variation->save();
+
+        }
+      }
+    }
+  }
+        
+}
 
 function uc_product_load($nid) {
   return entity_load('uc_product', $nid);
@@ -1973,6 +2038,7 @@ function uc_product_action_add_to_cart($product, $context = array()) {
 function uc_product_autoload_info() {
   return array(
     'UCProduct' => 'uc_product.entity.inc',
+    'UCProductVariation' => 'uc_product.entity.inc',
     'uc_product_handler_field_addtocart' => 'views/uc_product_handler_field_addtocart.inc',
     'uc_product_handler_field_buyitnow' => 'views/uc_product_handler_field_buyitnow.inc',
     'uc_product_handler_field_display_price' => 'views/uc_product_handler_field_display_price.inc',

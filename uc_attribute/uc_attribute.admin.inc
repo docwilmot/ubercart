@@ -583,7 +583,6 @@ function uc_attribute_option_delete_confirm_submit($form, &$form_state) {
  * @ingroup forms
  */
 function uc_object_attributes_form($form, &$form_state, $object, $type, $view = 'overview') {
-  dpm('pool');
   switch ($type) {
     case 'class':
       $class = $object;
@@ -593,6 +592,7 @@ function uc_object_attributes_form($form, &$form_state, $object, $type, $view = 
       }
       backdrop_set_title($class->name);
       $attributes = uc_class_get_attributes($id);
+  dpm($attributes);
       break;
 
     case 'product':
@@ -604,6 +604,7 @@ function uc_object_attributes_form($form, &$form_state, $object, $type, $view = 
       }
       backdrop_set_title($product->title);
       $attributes = uc_product_get_attributes($id);
+  dpm($attributes);
   }
 
   $used_aids = array();
