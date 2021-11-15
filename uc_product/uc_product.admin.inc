@@ -18,23 +18,7 @@ function uc_product_products_default() {
     $links = array();
     $links['edit'] = array(
       'title' => t('Edit'),
-      'href' => 'admin/store/products/classes/' . $class->pcid . '/edit',
-    );
-    if (empty($class->locked)) {
-      $links['delete'] = array(
-        'title' => t('Delete'),
-        'href' => 'admin/store/products/classes/' . $class->pcid . '/delete',
-      );
-    }
-    $links['manage'] = array(
-      'title' => t('Manage fields'),
-      'href' => 'admin/store/products/classes/' . $class->pcid . '/fields',
-      'query' => $options,
-    );
-    $links['display'] = array(
-      'title' => t('Manage display'),
-      'href' => 'admin/store/products/classes/' . $class->pcid . '/display',
-      'query' => $options,
+      'href' => 'product/' . $product->nid . '/edit',
     );
 
     $operations = array(
@@ -44,12 +28,12 @@ function uc_product_products_default() {
     $row[] = check_plain($product->nid);
     $row[] = l($product->title, 'product/' . $product->nid);
     $row[] = filter_xss_admin($product->title);
-    $row[] = ''; // backdrop_render($operations);
+    $row[] = backdrop_render($operations);
     $rows[] = $row;
   }
 
   $build = array();
-  $build['product_classes'] = array(
+  $build['product_list'] = array(
     '#theme' => 'table',
     '#header' => $header,
     '#rows' => $rows,
