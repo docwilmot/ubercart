@@ -14,7 +14,8 @@ function uc_product_products_default() {
   $header = array(t('Product ID'), t('Name'), t('Description'), t('Operations'));
   $rows = array();
   foreach ($products as $product) {
-/*     $links = array();
+  $row = array();
+    $links = array();
     $links['edit'] = array(
       'title' => t('Edit'),
       'href' => 'admin/store/products/classes/' . $class->pcid . '/edit',
@@ -40,7 +41,7 @@ function uc_product_products_default() {
       '#type' => 'dropbutton',
       '#links' => $links,
     );
- */    $row[] = check_plain($product->nid);
+    $row[] = check_plain($product->nid);
     $row[] = l($product->title, 'product/' . $product->nid);
     $row[] = filter_xss_admin($product->title);
     $row[] = ''; // backdrop_render($operations);

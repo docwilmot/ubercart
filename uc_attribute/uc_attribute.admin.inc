@@ -592,7 +592,6 @@ function uc_object_attributes_form($form, &$form_state, $object, $type, $view = 
       }
       backdrop_set_title($class->name);
       $attributes = uc_class_get_attributes($id);
-  dpm($attributes);
       break;
 
     case 'product':
@@ -604,7 +603,6 @@ function uc_object_attributes_form($form, &$form_state, $object, $type, $view = 
       }
       backdrop_set_title($product->title);
       $attributes = uc_product_get_attributes($id);
-  dpm($attributes);
   }
 
   $used_aids = array();
