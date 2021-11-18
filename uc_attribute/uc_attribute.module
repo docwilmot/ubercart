@@ -367,9 +367,9 @@ function uc_attribute_entity_insert($entity, $type) {
         'display',
         'default_option',
       ))
-      ->condition('pcid', $node->type);
-    // SELECT $node->nid AS nid.
-    $select->addExpression(':nid', 'nid', array(':nid' => $node->nid));
+      ->condition('pcid', $entity->type);
+    // SELECT $entity->nid AS nid.
+    $select->addExpression(':nid', 'nid', array(':nid' => $entity->nid));
 
     db_insert('uc_product_attributes')
       ->from($select)
@@ -384,8 +384,8 @@ function uc_attribute_entity_insert($entity, $type) {
         'weight',
         'ordering',
       ))
-      ->condition('pcid', $node->type);
-    $select->addExpression(':nid', 'nid', array(':nid' => $node->nid));
+      ->condition('pcid', $entity->type);
+    $select->addExpression(':nid', 'nid', array(':nid' => $entity->nid));
 
     db_insert('uc_product_options')
       ->from($select)

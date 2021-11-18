@@ -285,17 +285,13 @@ function uc_product_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
-      'aid' => array(
-        'description' => 'The attribute id for this variation.',
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'oid' => array(
-        'description' => 'The option id for this variation.',
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
+      'option_data' => array(
+        'description' => 'A serialized array of attribute and option pairs.',
+        'type' => 'blob',
+        'not null' => FALSE,
+        // todo not big?
+        'size' => 'big',
+        'serialize' => TRUE,
       ),
     ),
     'indexes' => array(

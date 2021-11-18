@@ -1203,7 +1203,9 @@ function uc_object_options_form_submit($form, &$form_state) {
     $id = 'pcid';
   }
 
-  foreach ($form_state['values']['attributes'] as $attribute) {
+dpm($form_state['values']);
+  $aopairs = array();
+  foreach ($form_state['values']['attributes'] as $aid_key => $attribute) {
     if (isset($attribute['default'])) {
       db_update($attr_table)
         ->fields(array(
@@ -1226,6 +1228,8 @@ function uc_object_options_form_submit($form, &$form_state) {
           $option['oid'] = $oid;
 
           backdrop_write_record($opt_table, $option);
+          $aid_key = (string) $aid_key;
+          $aopairs[$aid_key][] = (string) $oid;
         }
         elseif ($form_state['values']['type'] == 'product') {
           $aid = $attribute['aid'];
@@ -1237,6 +1241,11 @@ function uc_object_options_form_submit($form, &$form_state) {
         }
       }
     }
+  }
+
+  if ($form_state['values']['type'] == 'product') {
+    $uc_product = entity_load('uc_product', $form_state['values']['id']);
+    uc_product_save_product_variations($uc_product, $aopairs);
   }
 
   backdrop_set_message(t('The @type options have been saved.', array('@type' => $form_state['values']['type'] == 'product' ? t('product') : t('product class'))));

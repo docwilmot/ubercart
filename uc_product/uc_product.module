@@ -710,46 +710,96 @@ function uc_product_form_insert($form, &$form_state) {
 
   $is_new = $uc_product->isNew();
   $uc_product->save($uc_product);
+
+  // Reload to get attributes.
+  $uc_product = entity_load('uc_product', $uc_product->nid);
   if ($is_new) {
-    uc_product_save_product_variations($uc_product);
+    $aopairs = uc_product_generate_aopairs($uc_product);
+    uc_product_save_product_variations($uc_product, $aopairs);
   }
   $form_state['redirect'] = 'product/' . $uc_product->nid;
 }
 
 
-function uc_product_save_product_variations($uc_product) {
+function uc_product_generate_aopairs($uc_product) {
   if (isset($uc_product->attributes)) {
 
-    // $query = new EntityFieldQuery();
-    // $query->entityCondition('entity_type', 'uc_product_variation');
-    // $query->entityCondition('pnid', $uc_product->nid);
-    // $result = $query->execute();
-    // $variations = entity_load_multiple('uc_product_variation', array_keys($result['uc_product_variation']));
-
+    $aopairs = array();
     foreach ($uc_product->attributes as $key => $attribute) {
       if (isset($attribute->options)) {
         foreach ($attribute->options as $option_key => $option) {
-          // If a variation with this combo doesnt exist, create one.
-          foreach ($variations as $variation) {
-            $settings = array(
-              'pnid' => $uc_product->nid,
-              'type' => $uc_product->type,
-              'langcode' => $uc_product->langcode,
-              'title' => $uc_product->title . $key . $option_key,
-              'uid' => $uc_product->uid,
-              'created' => time(),
-              'changed' => time(),
-              'aid' => $key,
-              'oid' => $option_key,
-            );
-            // $uc_product_variation = entity_create('uc_product_variation', $settings);
-            // $uc_product_variation->save();
-          }
+          $key = (string) $key;
+          $aopairs[$key][] = (string) $option_key;
         }
       }
     }
+  return $aopairs;
   }
 }
+
+function uc_product_save_product_variations($uc_product, $aopairs) {
+  db_delete('uc_product_variations')
+    ->condition('pnid', $uc_product->nid)
+    ->execute();
+
+  $variations = uc_product_generate_variations($aopairs);
+  foreach ($variations as $index => $variation) {
+    $settings = array(
+      'pnid' => $uc_product->nid,
+      'type' => $uc_product->type,
+      'langcode' => $uc_product->langcode,
+      'title' => $uc_product->title . '_' . $index,
+      'uid' => $uc_product->uid,
+      'created' => time(),
+      'changed' => time(),
+      'option_data' => $variation,
+    );
+    $uc_product_variation = entity_create('uc_product_variation', $settings);
+    $uc_product_variation->save();
+  }
+}
+
+/**
+ * Generate all the possible combinations among a set of nested arrays.
+ *
+ * @param array $data
+ *   The entrypoint array container.
+ * @param array $all
+ *   The final container (used internally).
+ * @param array $group
+ *   The sub container (used internally).
+ * @param mixed $val
+ *   The value to append (used internally).
+ * @param int $i
+ *   The key index (used internally).
+ */
+function uc_product_generate_variations(array $data, array &$all = array(), array $group = array(), $value = null, $i = 0) {
+  $keys = array_keys($data);
+  if (isset($value) === true) {
+    array_push($group, $value);
+  }
+
+  if ($i >= count($data)) {
+    array_push($all, $group);
+  } else {
+    $currentKey = $keys[$i];
+    $currentElement = $data[$currentKey];
+    foreach ($currentElement as $val) {
+      generate_combinations($data, $all, $group, $val, $i + 1);
+    }
+  }
+
+  $bigall = array();
+  foreach ($all as $each) {
+    $newany = array();
+    foreach ($each as $anykey => $any) {
+      $newany[] = $keys[$anykey] . ':' . $any;
+    }
+    $bigall[] = $newany;
+  }
+  return $bigall;
+}
+
 
 function uc_product_load($nid) {
   return entity_load('uc_product', $nid);
